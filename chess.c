@@ -68,7 +68,7 @@ void move_dump(Move move)
     pos_dump(move.from);
     if(move.take != CELL_EMPTY) putchar('x');
     pos_dump(move.to);
-    if(move.promotion != CELL_EMPTY) putchar(cell_repr(move.promotion));
+    if(move.promote != CELL_EMPTY) putchar(cell_repr(move.promote));
     if(move.check) putchar(cell_repr('+'));
     if(move.check && move.mate) putchar(cell_repr('#'));
 }
@@ -94,6 +94,8 @@ void game_init(Game *game)
     assert(game && "game_init: Invalid game instance");
     game->history.count = 0;
     game->history.items = 0;
+    game->valid_move_list.count = 0;
+    game->valid_move_list.items = 0;
     memset(game->board, 0, sizeof(game->board));
 }
 
@@ -175,7 +177,7 @@ void game_do_move(Game *game, Move move)
     game_board_set(game, move.to, from);
 }
 
-static Error _game_find_valid_moves_for_king(Game *game, Cell cell, Pos pos, MoveList *moves)
+static Error _game_find_valid_moves_for_king(Game *game, Cell cell, Pos pos)
 {
     for(int8_t i = -1; i <= 1; ++i) {
         for(int8_t j = -1; j <= 1; ++j) {
@@ -195,14 +197,13 @@ static Error _game_find_valid_moves_for_king(Game *game, Cell cell, Pos pos, Mov
                     continue;
                 }
             }
-            move_list_push(moves, move);
+            move_list_push(&game->valid_move_list, move);
         }
     }
     return ERROR_NONE;
 }
 
-#define ABS(v) ((v) >= 0 ? (v) : -(v))
-static Error _game_find_valid_moves_for_knight(Game *game, Cell cell, Pos pos, MoveList *moves)
+static Error _game_find_valid_moves_for_knight(Game *game, Cell cell, Pos pos)
 {
     static const int8_t knight_moves[8][2] = {
         { -2, -1 }, { -2,  1 },
@@ -225,24 +226,204 @@ static Error _game_find_valid_moves_for_knight(Game *game, Cell cell, Pos pos, M
         move.from = pos;
         move.to = to;
         if (dst != CELL_EMPTY) move.take = dst;
-        move_list_push(moves, move);
+        move_list_push(&game->valid_move_list, move);
     }
 
     return ERROR_NONE;
 }
 
-Error game_find_valid_moves(Game *game, Pos pos, MoveList *moves)
+static Error _game_find_valid_moves_for_rook(Game *game, Cell cell, Pos pos)
+{
+    // Check to right
+    for(int8_t i = 1; i < 8; ++i) {
+        Move move = {0};
+        move.piece = cell;
+        move.from = pos;
+        move.to = POS(pos.row, pos.col + i);
+        if(!IS_VALID_POS(move.to)) break;
+        Cell dst_cell = game_board_get(game, move.to);
+        if(dst_cell != CELL_EMPTY) {
+            if(cell_piece_kind(cell) != cell_piece_kind(dst_cell)) {
+                move.take = dst_cell;
+                move_list_push(&game->valid_move_list, move);
+            }
+            break;
+        }
+        move_list_push(&game->valid_move_list, move);
+    }
+
+    // Check to left
+    for(int8_t i = 1; i < 8; ++i) {
+        Move move = {0};
+        move.piece = cell;
+        move.from = pos;
+        move.to = POS(pos.row, pos.col - i);
+        if(!IS_VALID_POS(move.to)) break;
+        Cell dst_cell = game_board_get(game, move.to);
+        if(dst_cell != CELL_EMPTY) {
+            if(cell_piece_kind(cell) != cell_piece_kind(dst_cell)) {
+                move.take = dst_cell;
+                move_list_push(&game->valid_move_list, move);
+            }
+            break;
+        }
+        move_list_push(&game->valid_move_list, move);
+    }
+
+    // Check to bottom
+    for(int8_t i = 1; i < 8; ++i) {
+        Move move = {0};
+        move.piece = cell;
+        move.from = pos;
+        move.to = POS(pos.row + i, pos.col);
+        if(!IS_VALID_POS(move.to)) break;
+        Cell dst_cell = game_board_get(game, move.to);
+        if(dst_cell != CELL_EMPTY) {
+            if(cell_piece_kind(cell) != cell_piece_kind(dst_cell)) {
+                move.take = dst_cell;
+                move_list_push(&game->valid_move_list, move);
+            }
+            break;
+        }
+        move_list_push(&game->valid_move_list, move);
+    }
+
+    // Check to top
+    for(int8_t i = 1; i < 8; ++i) {
+        Move move = {0};
+        move.piece = cell;
+        move.from = pos;
+        move.to = POS(pos.row - i, pos.col);
+        if(!IS_VALID_POS(move.to)) break;
+        Cell dst_cell = game_board_get(game, move.to);
+        if(dst_cell != CELL_EMPTY) {
+            if(cell_piece_kind(cell) != cell_piece_kind(dst_cell)) {
+                move.take = dst_cell;
+                move_list_push(&game->valid_move_list, move);
+            }
+            break;
+        }
+        move_list_push(&game->valid_move_list, move);
+    }
+
+    return ERROR_NONE;
+}
+
+static Error _game_find_valid_moves_for_pawn(Game *game, Cell cell, Pos pos)
+{
+    int8_t y_start = cell_piece_kind(cell) == PIECE_WHITE ? 1 : 6;
+    int8_t y_dir = cell_piece_kind(cell) == PIECE_WHITE ? +1 : -1;
+    int8_t y_max_pos = cell_piece_kind(cell) == PIECE_WHITE ? 7 : 0;
+    Cell default_promotion = cell_piece_kind(cell) == PIECE_WHITE ? CELL_W_QUEEN : CELL_B_QUEEN;
+
+    // Forward
+    {
+        Pos  dst_pos  = POS(pos.row + y_dir, pos.col);
+        Cell dst_cell = game_board_get(game, dst_pos);
+        if(dst_cell == CELL_EMPTY) {
+            Move move = {0};
+            move.piece = cell;
+            move.from = pos;
+            move.to = dst_pos;
+            if(move.to.row == y_max_pos) move.promote = default_promotion;
+            move_list_push(&game->valid_move_list, move);
+
+            if(pos.row == y_start) {
+                Pos  dst_pos  = POS(pos.row + 2 * y_dir, pos.col);
+                Cell dst_cell = game_board_get(game, dst_pos);
+                if(IS_VALID_POS(dst_pos) && dst_cell == CELL_EMPTY) {
+                    Move move = {0};
+                    move.piece = cell;
+                    move.from = pos;
+                    move.to = dst_pos;
+                    if(move.to.row == y_max_pos) move.promote = default_promotion;
+                    move_list_push(&game->valid_move_list, move);
+                }
+            }
+        }
+    }
+    {
+        Pos dst_pos = POS(pos.row + y_dir, pos.col - 1);
+        Cell dst_cell = game_board_get(game, dst_pos);
+        if(dst_cell != CELL_EMPTY && cell_piece_kind(dst_cell) != cell_piece_kind(cell)) {
+            Move move = {0};
+            move.piece = cell;
+            move.from = pos;
+            move.to = dst_pos;
+            move.take = dst_cell;
+            if(move.to.row == y_max_pos) move.promote = default_promotion;
+            move_list_push(&game->valid_move_list, move);
+        }
+    }
+    {
+        Pos dst_pos = POS(pos.row + y_dir, pos.col + 1);
+        Cell dst_cell = game_board_get(game, dst_pos);
+        if(dst_cell != CELL_EMPTY && cell_piece_kind(dst_cell) != cell_piece_kind(cell)) {
+            Move move = {0};
+            move.piece = cell;
+            move.from = pos;
+            move.to = dst_pos;
+            move.take = dst_cell;
+            if(move.to.row == y_max_pos) move.promote = default_promotion;
+            move_list_push(&game->valid_move_list, move);
+        }
+    }
+    return ERROR_NONE;
+}
+
+static Error _game_find_valid_moves_for_bishop(Game *game, Cell cell, Pos pos)
+{
+    int8_t dirs[4][2] = {
+        {1, 1},   // ↘ bottom-right
+        {1, -1},  // ↙ bottom-left
+        {-1, 1},  // ↗ top-right
+        {-1, -1}  // ↖ top-left
+    };
+
+    for(int d = 0; d < 4; ++d) {
+        for(int i = 1; i < 8; ++i) {
+            Move move = {0};
+            move.piece = cell;
+            move.from = pos;
+            move.to = POS(pos.row + i * dirs[d][0], pos.col + i * dirs[d][1]);
+            if (!IS_VALID_POS(move.to)) break;
+
+            Cell dst_cell = game_board_get(game, move.to);
+            if (dst_cell != CELL_EMPTY) {
+                if (cell_piece_kind(cell) == cell_piece_kind(dst_cell)) break;
+                move.take = dst_cell;
+                move_list_push(&game->valid_move_list, move);
+                break;
+            }
+
+            move_list_push(&game->valid_move_list, move);
+        }
+    }
+
+    return ERROR_NONE;
+}
+
+Error game_find_valid_moves(Game *game, Pos pos)
 {
     assert(game  && "game_dump: Invalid game instance");
-    assert(moves && "game_dump: Invalid moves");
-    moves->count = 0;
+    game->valid_move_list.count = 0;
 
     Cell cell = game_board_get(game, pos);
     if(cell == CELL_EMPTY) return ERROR_EMPTY_CELL;
-    if(cell == CELL_W_KING || cell == CELL_B_KING) 
-        return _game_find_valid_moves_for_king(game, cell, pos, moves);
+
     if(cell == CELL_W_KNIGHT || cell == CELL_B_KNIGHT) 
-        return _game_find_valid_moves_for_knight(game, cell, pos, moves);
+        return _game_find_valid_moves_for_knight(game, cell, pos);
+    if(cell == CELL_W_ROOK || cell == CELL_B_ROOK)
+        return _game_find_valid_moves_for_rook(game, cell, pos);
+    if(cell == CELL_W_BISHOP || cell == CELL_B_BISHOP)
+        return _game_find_valid_moves_for_bishop(game, cell, pos);
+    if(cell == CELL_W_QUEEN || cell == CELL_B_QUEEN) {
+        Error err = _game_find_valid_moves_for_rook(game, cell, pos);
+        if(err != ERROR_NONE) return err;
+        return _game_find_valid_moves_for_bishop(game, cell, pos);
+    }
+    if(cell == CELL_W_KING || cell == CELL_B_KING) 
+        return _game_find_valid_moves_for_king(game, cell, pos);
 
     return ERROR_NONE;
 }

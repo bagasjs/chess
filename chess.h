@@ -7,7 +7,7 @@
 typedef enum {
     ERROR_NONE = 0,
     ERROR_EMPTY_CELL,
-    ERROR_INVALID_POS,
+    ERROR_INVALID_MOVE,
 } Error;
 
 typedef enum {
@@ -51,7 +51,7 @@ typedef struct {
 
     Cell piece;
     Cell take;
-    bool promotion;
+    Cell promote;
     bool castling;
     bool en_passant;
     bool check;
@@ -81,6 +81,7 @@ typedef struct {
     // Non-serialized state
     bool white_king_check;
     bool black_king_check;
+    MoveList valid_move_list;
 } Game;
 
 void game_init(Game *game);
@@ -89,6 +90,6 @@ void game_board_set(Game *game, Pos pos, Cell cell);
 void game_set_board_with_basic_start_pos(Game *game);
 void game_dump(Game *game);
 void game_do_move(Game *game, Move move);
-Error game_find_valid_moves(Game *game, Pos pos, MoveList *moves);
+Error game_find_valid_moves(Game *game, Pos pos);
 
 #endif // CHESS_H_
