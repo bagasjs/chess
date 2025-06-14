@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chess</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+            * {
+                font-family: "JetBrains Mono", monospace;
+                font-optical-sizing: auto;
+                font-weight: 200;
+                font-style: normal;
+                color: rgb(24, 24, 24);
+            }
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            #term {
+                background-color: rgb(0, 0, 0);
+                min-height: 80px;
+                width: 100%;
+                margin: 10px 10px 10px 10px;
+                padding: 5px 5px 5px 5px;
+                color: white;
+                font
+            }
+            #game {
+                background: rgb(10, 10, 10);
+                width: fit-content;
+            }
+            .row {
+                display: flex;
+            }
+            .col {
+                width:  60px;
+                height: 60px;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 32px;
+                cursor: pointer;
+            }
+            .w {
+                background-color: rgb(200, 100, 50);
+            }
+            .b {
+                background-color: rgb(100, 100, 50);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="game">
+            <div id="8" class="row">
+                <div data-pos="a8" class="col w"></div>
+                <div data-pos="b8" class="col b"></div>
+                <div data-pos="c8" class="col w"></div>
+                <div data-pos="d8" class="col b"></div>
+                <div data-pos="e8" class="col w"></div>
+                <div data-pos="f8" class="col b"></div>
+                <div data-pos="g8" class="col w"></div>
+                <div data-pos="h8" class="col b"></div>
+            </div>
+            <div id="7" class="row">
+                <div data-pos="a7" class="col b"></div>
+                <div data-pos="b7" class="col w"></div>
+                <div data-pos="c7" class="col b"></div>
+                <div data-pos="d7" class="col w"></div>
+                <div data-pos="e7" class="col b"></div>
+                <div data-pos="f7" class="col w"></div>
+                <div data-pos="g7" class="col b"></div>
+                <div data-pos="h7" class="col w"></div>
+            </div>
+            <div id="6" class="row">
+                <div data-pos="a6" class="col w"></div>
+                <div data-pos="b6" class="col b"></div>
+                <div data-pos="c6" class="col w"></div>
+                <div data-pos="d6" class="col b"></div>
+                <div data-pos="e6" class="col w"></div>
+                <div data-pos="f6" class="col b"></div>
+                <div data-pos="g6" class="col w"></div>
+                <div data-pos="h6" class="col b"></div>
+            </div>
+            <div id="5" class="row">
+                <div data-pos="a5" class="col b"></div>
+                <div data-pos="b5" class="col w"></div>
+                <div data-pos="c5" class="col b"></div>
+                <div data-pos="d5" class="col w"></div>
+                <div data-pos="e5" class="col b"></div>
+                <div data-pos="f5" class="col w"></div>
+                <div data-pos="g5" class="col b"></div>
+                <div data-pos="h5" class="col w"></div>
+            </div>
+            <div id="4" class="row">
+                <div data-pos="a4" class="col w"></div>
+                <div data-pos="b4" class="col b"></div>
+                <div data-pos="c4" class="col w"></div>
+                <div data-pos="d4" class="col b"></div>
+                <div data-pos="e4" class="col w"></div>
+                <div data-pos="f4" class="col b"></div>
+                <div data-pos="g4" class="col w"></div>
+                <div data-pos="h4" class="col b"></div>
+            </div>
+            <div id="3" class="row">
+                <div data-pos="a3" class="col b"></div>
+                <div data-pos="b3" class="col w"></div>
+                <div data-pos="c3" class="col b"></div>
+                <div data-pos="d3" class="col w"></div>
+                <div data-pos="e3" class="col b"></div>
+                <div data-pos="f3" class="col w"></div>
+                <div data-pos="g3" class="col b"></div>
+                <div data-pos="h3" class="col w"></div>
+            </div>
+            <div id="2" class="row">
+                <div data-pos="a2" class="col w"></div>
+                <div data-pos="b2" class="col b"></div>
+                <div data-pos="c2" class="col w"></div>
+                <div data-pos="d2" class="col b"></div>
+                <div data-pos="e2" class="col w"></div>
+                <div data-pos="f2" class="col b"></div>
+                <div data-pos="g2" class="col w"></div>
+                <div data-pos="h2" class="col b"></div>
+            </div>
+            <div id="1" class="row">
+                <div data-pos="a1" class="col b"></div>
+                <div data-pos="b1" class="col w"></div>
+                <div data-pos="c1" class="col b"></div>
+                <div data-pos="d1" class="col w"></div>
+                <div data-pos="e1" class="col b"></div>
+                <div data-pos="f1" class="col w"></div>
+                <div data-pos="g1" class="col b"></div>
+                <div data-pos="h1" class="col w"></div>
+            </div>
+        </div>
+        <div id="term">
+            <span style="color: green;">Console</span><br>
+        </div>
+        <script src="index.js"></script>
+    </body>
+</html>

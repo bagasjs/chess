@@ -1,8 +1,23 @@
 #ifndef CHESS_H_
 #define CHESS_H_
 
+#include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#ifndef CHESS_WASM
+#include <assert.h>
+#define PLATFORM_ASSERT(cond) assert(cond)
+#else
+#define PLATFORM_ASSERT(cond)
+#endif
+
+void  platform_exit(int exit_code);
+void  platform_putchar(int codepoint);
+void  platform_print_text(const char *text);
+void  platform_print_int(int64_t value);
+void *platform_heap_alloc(size_t size);
+void  platform_heap_free(void *ptr);
 
 typedef enum {
     ERROR_NONE = 0,

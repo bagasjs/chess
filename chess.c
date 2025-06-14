@@ -1,11 +1,52 @@
 #include <stdbool.h>
 #include <stdint.h>
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "chess.h"
+
+#ifndef CHESS_WASM
+#include <stdio.h>
+#include <stdlib.h> // malloc, free
+void platform_putchar(int codepoint)
+{
+    putchar(codepoint);
+}
+
+void platform_print_text(const char *text)
+{
+    printf("%s", text);
+}
+
+void platform_print_int(int64_t value)
+{
+    printf("%lld", value);
+}
+
+void *platform_heap_alloc(size_t size)
+{
+    return malloc(size);
+}
+
+void platform_heap_free(void *ptr)
+{
+    return free(ptr);
+}
+#endif
+
+static void *internal_memcpy(void *dst, const void *src, size_t count)
+{
+    for(size_t i = 0; i < count; ++i) {
+        ((int8_t*)dst)[i] = ((const int8_t*)src)[i];
+    }
+    return dst;
+}
+
+static void *internal_memset(void *dst, const int value, size_t count)
+{
+    for(size_t i = 0; i < count; ++i) {
+        ((int8_t*)dst)[i] = ((const int)value);
+    }
+    return dst;
+}
 
 char cell_repr(Cell cell)
 {
@@ -51,26 +92,26 @@ Pos pos_from(const char *pos)
 {
     char col_char = pos[0];
     char row_char = pos[1];
-    assert('1' <= row_char && row_char <= '8');
-    assert('a' <= col_char && col_char <= 'h');
+    PLATFORM_ASSERT('1' <= row_char && row_char <= '8');
+    PLATFORM_ASSERT('a' <= col_char && col_char <= 'h');
     return (Pos) { .row = row_char - '1', .col = col_char - 'a', };
 }
 
 void pos_dump(Pos pos)
 {
-    putchar(pos.col + 'a');
-    putchar(pos.row + '1');
+    platform_putchar(pos.col + 'a');
+    platform_putchar(pos.row + '1');
 }
 
 void move_dump(Move move)
 {
-    putchar(cell_repr(move.piece));
+    platform_putchar(cell_repr(move.piece));
     pos_dump(move.from);
-    if(move.take != CELL_EMPTY) putchar('x');
+    if(move.take != CELL_EMPTY) platform_putchar('x');
     pos_dump(move.to);
-    if(move.promote != CELL_EMPTY) putchar(cell_repr(move.promote));
-    if(move.check) putchar(cell_repr('+'));
-    if(move.check && move.mate) putchar(cell_repr('#'));
+    if(move.promote != CELL_EMPTY) platform_putchar(cell_repr(move.promote));
+    if(move.check) platform_putchar(cell_repr('+'));
+    if(move.check && move.mate) platform_putchar(cell_repr('#'));
 }
 
 void move_list_push(MoveList *list, Move move)
@@ -79,10 +120,10 @@ void move_list_push(MoveList *list, Move move)
         size_t item_size = sizeof(*list->items); 
         size_t new_capacity = list->capacity * 2; 
         if(new_capacity == 0) new_capacity = 32; 
-        void *new_items = malloc(new_capacity * item_size); 
-        assert(new_items != NULL && "Buy More RAM LOL!"); 
-        memcpy(new_items, list->items, list->count*item_size); 
-        free(list->items); 
+        void *new_items = platform_heap_alloc(new_capacity * item_size); 
+        PLATFORM_ASSERT(new_items != NULL && "Buy More RAM LOL!"); 
+        internal_memcpy(new_items, list->items, list->count*item_size); 
+        platform_heap_free(list->items); 
         list->items = new_items; 
         list->capacity = new_capacity; 
     } 
@@ -91,34 +132,34 @@ void move_list_push(MoveList *list, Move move)
 
 void game_init(Game *game)
 {
-    assert(game && "game_init: Invalid game instance");
+    PLATFORM_ASSERT(game && "game_init: Invalid game instance");
     game->history.count = 0;
     game->history.items = 0;
     game->valid_move_list.count = 0;
     game->valid_move_list.items = 0;
-    memset(game->board, 0, sizeof(game->board));
+    internal_memset(game->board, 0, sizeof(game->board));
 }
 
 Cell game_board_get(Game *game, Pos pos)
 {
-    assert(game && "game_board_get: Invalid game instance");
-    assert(0 <= pos.row && pos.row < 8);
-    assert(0 <= pos.col && pos.col < 8);
+    PLATFORM_ASSERT(game && "game_board_get: Invalid game instance");
+    PLATFORM_ASSERT(0 <= pos.row && pos.row < 8);
+    PLATFORM_ASSERT(0 <= pos.col && pos.col < 8);
     return game->board[pos.row * 8 + pos.col];
 }
 
 void game_board_set(Game *game, Pos pos, Cell cell)
 {
-    assert(game && "game_board_set: Invalid game instance");
-    assert(0 <= pos.row && pos.row < 8);
-    assert(0 <= pos.col && pos.col < 8);
+    PLATFORM_ASSERT(game && "game_board_set: Invalid game instance");
+    PLATFORM_ASSERT(0 <= pos.row && pos.row < 8);
+    PLATFORM_ASSERT(0 <= pos.col && pos.col < 8);
     game->board[pos.row * 8 + pos.col] = cell;
 }
 
 void game_set_board_with_basic_start_pos(Game *game)
 {
-    assert(game && "game_set_board_with_basic_start_pos: Invalid game instance");
-    memset(game->board, 0, sizeof(game->board));
+    PLATFORM_ASSERT(game && "game_set_board_with_basic_start_pos: Invalid game instance");
+    internal_memset(game->board, 0, sizeof(game->board));
     game_board_set(game, POS(0, 0), CELL_W_ROOK);
     game_board_set(game, POS(0, 1), CELL_W_KNIGHT);
     game_board_set(game, POS(0, 2), CELL_W_BISHOP);
@@ -155,22 +196,23 @@ void game_set_board_with_basic_start_pos(Game *game)
 
 void game_dump(Game *game)
 {
-    assert(game && "game_dump: Invalid game instance");
+    PLATFORM_ASSERT(game && "game_dump: Invalid game instance");
     for(int8_t row = 7; row >= 0; --row) {
-        printf("%d ", row + 1);
+        platform_print_int(row + 1);
+        platform_putchar(' ');
         for(int8_t col = 0; col < 8; ++col) {
-            if(col > 0) putchar(' ');
+            if(col > 0) platform_putchar(' ');
             Cell cell = game_board_get(game, POS(row, col));
-            putchar(cell_repr(cell));
+            platform_putchar(cell_repr(cell));
         }
-        putchar('\n');
+        platform_putchar('\n');
     }
-    printf("  A B C D E F G H\n\n");
+    platform_print_text("  A B C D E F G H\n\n");
 }
 
 void game_do_move(Game *game, Move move)
 {
-    assert(game  && "game_dump: Invalid game instance");
+    PLATFORM_ASSERT(game  && "game_dump: Invalid game instance");
     Cell from = game_board_get(game, move.from);
     Cell to = game_board_get(game, move.to);
     game_board_set(game, move.from, CELL_EMPTY);
@@ -405,7 +447,7 @@ static Error _game_find_valid_moves_for_bishop(Game *game, Cell cell, Pos pos)
 
 Error game_find_valid_moves(Game *game, Pos pos)
 {
-    assert(game  && "game_dump: Invalid game instance");
+    PLATFORM_ASSERT(game  && "game_dump: Invalid game instance");
     game->valid_move_list.count = 0;
 
     Cell cell = game_board_get(game, pos);
