@@ -1,5 +1,5 @@
-# Bagas' Chess Engine
-My simple chess engine
+# Bagas' Chess Implementation
+My own  simple chess implementation
 
 ## TODO
 - Pawn Movement (minus en-passant)
