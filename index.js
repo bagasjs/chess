@@ -28,11 +28,26 @@ const putcell = (codepoint, row, col) => {
     const result = Array.from(document.querySelectorAll("#game .row .col"));
     const index = (7 - row) * 8 + col;
     if(index >= 64) throw Error(`Index error at putcell ${index} => ${row}, ${col}`);
-    if(codepoint === 0 || codepoint === 32) {
+    if(codepoint === 0 || codepoint === 32 || codepoint == 46) {
+        // If codepoint == '\0' || codepoint == ' ' || codepoint == '.'
         result[index].innerHTML = "";
     } else {
         const display = String.fromCodePoint(codepoint);
-        result[index].innerHTML = display;
+        const displayToImageFile = {
+            "P": "WP.png",
+            "N": "WN.png",
+            "B": "WB.png",
+            "R": "WR.png",
+            "Q": "WQ.png",
+            "K": "WK.png",
+            "p": "BP.png",
+            "n": "BN.png",
+            "b": "BB.png",
+            "r": "BR.png",
+            "q": "BQ.png",
+            "k": "BK.png",
+        }
+        result[index].innerHTML = `<img class="piece" data-row="${row}" data-col="${col}" src="./assets/${displayToImageFile[display]}"/>`;
     }
 }
 
@@ -67,16 +82,29 @@ const putcell = (codepoint, row, col) => {
     wasm.instance.exports._start();
 
     if(wasm.instance.exports.handle_cell_click_event) {
-        document.querySelectorAll("#game .row .col").forEach(dom => {
-            dom.addEventListener("click", e => {
-                const posStr = e.target.dataset.pos;
-                const ccp = posStr.codePointAt(0);
-                const rcp = posStr.codePointAt(1);
-                console.assert(!(48 <= ccp && ccp <= 55), `ccp = ${ccp}`);
-                console.assert(!(97 <= rcp && rcp <= 103), `rcp = ${rcp}`);
-                wasm.instance.exports.handle_cell_click_event(rcp - 49, ccp - 97);
-            });
+        document.getElementById("game").addEventListener("click", e => {
         });
+        document.addEventListener("click", e => {
+            const cell = e.target.closest(".col");
+            const posStr = cell?.dataset.pos;
+            console.log(posStr);
+            const ccp = posStr.codePointAt(0);
+            const rcp = posStr.codePointAt(1);
+            console.assert(!(48 <= ccp && ccp <= 55), `ccp = ${ccp}`);
+            console.assert(!(97 <= rcp && rcp <= 103), `rcp = ${rcp}`);
+            wasm.instance.exports.handle_cell_click_event(rcp - 49, ccp - 97);
+        });
+        // document.querySelectorAll("#game .row .col").forEach(dom => {
+        //     dom.addEventListener("click", e => {
+        //         const posStr = e.target.dataset.pos;
+        //         console.log(posStr);
+        //         const ccp = posStr.codePointAt(0);
+        //         const rcp = posStr.codePointAt(1);
+        //         console.assert(!(48 <= ccp && ccp <= 55), `ccp = ${ccp}`);
+        //         console.assert(!(97 <= rcp && rcp <= 103), `rcp = ${rcp}`);
+        //         wasm.instance.exports.handle_cell_click_event(rcp - 49, ccp - 97);
+        //     });
+        // });
     }
 
     if(wasm.instance.exports._frame) {

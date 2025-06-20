@@ -66,7 +66,10 @@ void handle_cell_click_event(int row, int col)
             }
         }
     } else {
-        if(game_board_get(&game, pos) == CELL_EMPTY) return;
+        if(game_board_get(&game, pos) == CELL_EMPTY) {
+            platform_print_text("Picking empty cell?\n");
+            return;
+        }
         pick.row = row;
         pick.col = col;
         has_pick = true;
