@@ -24,7 +24,21 @@ function stringFromPtr(buf, ptr) {
     return new TextDecoder().decode(bytes);
 }
 
+const set_cell_as_selected = (isSelected, row, col) => {
+    /** @type {HTMLElement[]} */
+    const result = Array.from(document.querySelectorAll("#game .row .col"));
+    const index = (7 - row) * 8 + col;
+    if(index >= 64) throw Error(`Index error at putcell ${index} => ${row}, ${col}`);
+
+    if(isSelected) {
+        result[index].classList.add("selected");
+    } else {
+        result[index].classList.remove("selected");
+    }
+}
+
 const putcell = (codepoint, row, col) => {
+    /** @type {HTMLElement[]} */
     const result = Array.from(document.querySelectorAll("#game .row .col"));
     const index = (7 - row) * 8 + col;
     if(index >= 64) throw Error(`Index error at putcell ${index} => ${row}, ${col}`);
@@ -73,6 +87,7 @@ const putcell = (codepoint, row, col) => {
     const wasm = await WebAssembly.instantiateStreaming(fetch("index.wasm"), {
         "env": {
             putcell,
+            set_cell_as_selected,
             platform_print_text,
             platform_print_int,
             platform_putchar,

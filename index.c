@@ -2,6 +2,7 @@
 
 // external function
 void putcell(int codepoint, int row, int col);
+void set_cell_as_selected(int is_selected, int row, int col);
 
 uint8_t MEMORY[32 * 1024] = {0};
 size_t allocated = 0;
@@ -35,6 +36,7 @@ void handle_cell_click_event(int row, int col)
 
     if(pick.row == row && pick.col == col) {
         has_pick = false;
+        set_cell_as_selected(0, row, col);
         return;
     } 
 
@@ -46,7 +48,9 @@ void handle_cell_click_event(int row, int col)
         Cell src_cell = game_board_get(&game, pick);
         Cell dst_cell = game_board_get(&game, pos);
         if(dst_cell != CELL_EMPTY && cell_piece_kind(src_cell) == cell_piece_kind(dst_cell)) {
+            set_cell_as_selected(0, pick.row, pick.col);
             pick = pos;
+            set_cell_as_selected(1, row, col);
             return;
         }
 
@@ -58,6 +62,7 @@ void handle_cell_click_event(int row, int col)
                 platform_putchar('\n');
                 if(move.to.row == row && move.to.col == col) {
                     platform_putchar('\n');
+                    set_cell_as_selected(0, pick.row, pick.col);
                     game_do_move(&game, move);
                     draw_board(&game);
                     has_pick = false;
@@ -73,6 +78,7 @@ void handle_cell_click_event(int row, int col)
         pick.row = row;
         pick.col = col;
         has_pick = true;
+        set_cell_as_selected(1, row, col);
         platform_print_text("Picking ");
         pos_dump(pos);
         platform_putchar('\n');
