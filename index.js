@@ -41,8 +41,7 @@ const putcell = (codepoint, row, col) => {
     const platform_print_text = (pText)  =>  {
         const buffer = wasm.instance.exports.memory.buffer;
         const display = stringFromPtr(buffer, pText);
-        display.replace("\n", "<br>");
-        term.innerHTML += display;
+        term.innerHTML += display.replace("\n", "<br>");
     }
     const platform_print_int = value => {
         term.innerHTML += `${value}`

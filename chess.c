@@ -58,19 +58,19 @@ char cell_repr(Cell cell)
         [CELL_W_ROOK]   = 'R',
         [CELL_W_QUEEN]  = 'Q',
         [CELL_W_KING]   = 'K',
-        [CELL_B_PAWN]   = 'P',
-        [CELL_B_KNIGHT] = 'N',
-        [CELL_B_BISHOP] = 'B',
-        [CELL_B_ROOK]   = 'R',
-        [CELL_B_QUEEN]  = 'Q',
-        [CELL_B_KING]   = 'K',
+        [CELL_B_PAWN]   = 'p',
+        [CELL_B_KNIGHT] = 'n',
+        [CELL_B_BISHOP] = 'b',
+        [CELL_B_ROOK]   = 'r',
+        [CELL_B_QUEEN]  = 'q',
+        [CELL_B_KING]   = 'k',
     };
     return _cell_repr[cell];
 }
 
 PieceKind cell_piece_kind(Cell cell)
 {
-    static bool _is_black_piece[] = {
+    static PieceKind _cell_piece_kind[] = {
         [CELL_EMPTY]    = PIECE_INVALID,
         [CELL_W_PAWN]   = PIECE_WHITE,
         [CELL_W_KNIGHT] = PIECE_WHITE,
@@ -85,7 +85,7 @@ PieceKind cell_piece_kind(Cell cell)
         [CELL_B_QUEEN]  = PIECE_BLACK,
         [CELL_B_KING]   = PIECE_BLACK,
     };
-    return _is_black_piece[cell];
+    return _cell_piece_kind[cell];
 }
 
 Pos pos_from(const char *pos)
@@ -101,6 +101,12 @@ void pos_dump(Pos pos)
 {
     platform_putchar(pos.col + 'a');
     platform_putchar(pos.row + '1');
+}
+
+void game_pos_dump(Game *game, Pos pos)
+{
+    platform_putchar(cell_repr(game_board_get(game, pos)));
+    pos_dump(pos);
 }
 
 void move_dump(Move move)
@@ -353,8 +359,9 @@ static Error _game_find_valid_moves_for_rook(Game *game, Cell cell, Pos pos)
 
 static Error _game_find_valid_moves_for_pawn(Game *game, Cell cell, Pos pos)
 {
-    int8_t y_start = cell_piece_kind(cell) == PIECE_WHITE ? 1 : 6;
-    int8_t y_dir = cell_piece_kind(cell) == PIECE_WHITE ? +1 : -1;
+    PieceKind piece_kind = cell_piece_kind(cell);
+    int8_t y_start = piece_kind == PIECE_WHITE ? 1 : 6;
+    int8_t y_dir = piece_kind == PIECE_WHITE ? +1 : -1;
     int8_t y_max_pos = cell_piece_kind(cell) == PIECE_WHITE ? 7 : 0;
     Cell default_promotion = cell_piece_kind(cell) == PIECE_WHITE ? CELL_W_QUEEN : CELL_B_QUEEN;
 
@@ -464,6 +471,8 @@ Error game_find_valid_moves(Game *game, Pos pos)
         if(err != ERROR_NONE) return err;
         return _game_find_valid_moves_for_bishop(game, cell, pos);
     }
+    if(cell == CELL_W_PAWN || cell == CELL_B_PAWN)
+        return _game_find_valid_moves_for_pawn(game, cell, pos);
     if(cell == CELL_W_KING || cell == CELL_B_KING) 
         return _game_find_valid_moves_for_king(game, cell, pos);
 

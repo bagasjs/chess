@@ -42,17 +42,44 @@
                 font-size: 32px;
                 cursor: pointer;
             }
+            .col-info {
+                width:  20px;
+                height: 60px;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 16px;
+                cursor: pointer;
+                background-color: white;
+            }
+            .row-info {
+                width:  60px;
+                height: 20px;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 16px;
+                cursor: pointer;
+                background-color: white;
+            }
             .w {
                 background-color: rgb(200, 100, 50);
             }
             .b {
                 background-color: rgb(100, 100, 50);
             }
+            .chess-piece {
+                background-image: url("assets/Chess_Pieces_Sprite.png");
+                background-repeat: no-repeat;
+            }
         </style>
     </head>
     <body>
         <div id="game">
             <div id="8" class="row">
+                <div class="col-info">8</div>
                 <div data-pos="a8" class="col w"></div>
                 <div data-pos="b8" class="col b"></div>
                 <div data-pos="c8" class="col w"></div>
@@ -63,6 +90,7 @@
                 <div data-pos="h8" class="col b"></div>
             </div>
             <div id="7" class="row">
+                <div class="col-info">7</div>
                 <div data-pos="a7" class="col b"></div>
                 <div data-pos="b7" class="col w"></div>
                 <div data-pos="c7" class="col b"></div>
@@ -73,6 +101,7 @@
                 <div data-pos="h7" class="col w"></div>
             </div>
             <div id="6" class="row">
+                <div class="col-info">6</div>
                 <div data-pos="a6" class="col w"></div>
                 <div data-pos="b6" class="col b"></div>
                 <div data-pos="c6" class="col w"></div>
@@ -83,6 +112,7 @@
                 <div data-pos="h6" class="col b"></div>
             </div>
             <div id="5" class="row">
+                <div class="col-info">5</div>
                 <div data-pos="a5" class="col b"></div>
                 <div data-pos="b5" class="col w"></div>
                 <div data-pos="c5" class="col b"></div>
@@ -93,6 +123,7 @@
                 <div data-pos="h5" class="col w"></div>
             </div>
             <div id="4" class="row">
+                <div class="col-info">4</div>
                 <div data-pos="a4" class="col w"></div>
                 <div data-pos="b4" class="col b"></div>
                 <div data-pos="c4" class="col w"></div>
@@ -103,6 +134,7 @@
                 <div data-pos="h4" class="col b"></div>
             </div>
             <div id="3" class="row">
+                <div class="col-info">3</div>
                 <div data-pos="a3" class="col b"></div>
                 <div data-pos="b3" class="col w"></div>
                 <div data-pos="c3" class="col b"></div>
@@ -113,6 +145,7 @@
                 <div data-pos="h3" class="col w"></div>
             </div>
             <div id="2" class="row">
+                <div class="col-info">2</div>
                 <div data-pos="a2" class="col w"></div>
                 <div data-pos="b2" class="col b"></div>
                 <div data-pos="c2" class="col w"></div>
@@ -123,6 +156,7 @@
                 <div data-pos="h2" class="col b"></div>
             </div>
             <div id="1" class="row">
+                <div class="col-info">1</div>
                 <div data-pos="a1" class="col b"></div>
                 <div data-pos="b1" class="col w"></div>
                 <div data-pos="c1" class="col b"></div>
@@ -131,6 +165,17 @@
                 <div data-pos="f1" class="col w"></div>
                 <div data-pos="g1" class="col b"></div>
                 <div data-pos="h1" class="col w"></div>
+            </div>
+            <div id="1" class="row">
+                <div class="col-info"></div>
+                <div class="row-info">A</div>
+                <div class="row-info">B</div>
+                <div class="row-info">C</div>
+                <div class="row-info">D</div>
+                <div class="row-info">E</div>
+                <div class="row-info">F</div>
+                <div class="row-info">G</div>
+                <div class="row-info">H</div>
             </div>
         </div>
         <div id="term">
